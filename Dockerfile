@@ -31,8 +31,8 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 
-# Install prisma CLI (beserta semua transitive deps) untuk migrate deploy
-RUN npm install --no-save prisma@7.10.0
+# Install prisma CLI + tsx + seed deps untuk migrate deploy + seed
+RUN npm install --no-save prisma@7.10.0 tsx bcryptjs @prisma/adapter-pg pg
 
 # Entrypoint: jalankan migrate deploy otomatis lalu start server
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
