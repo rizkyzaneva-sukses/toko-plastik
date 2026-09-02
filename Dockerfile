@@ -26,12 +26,13 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma: schema, config, generated client, dan CLI supaya migrate deploy jalan
+# Prisma: schema + migrations + config + generated client untuk migrate deploy
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+
+# Install prisma CLI (beserta semua transitive deps) untuk migrate deploy
+RUN npm install --no-save prisma@7.10.0
 
 # Entrypoint: jalankan migrate deploy otomatis lalu start server
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
@@ -41,4 +42,5 @@ USER nextjs
 EXPOSE 3000
 ENV PORT=3000 HOSTNAME=0.0.0.0
 CMD ["./docker-entrypoint.sh"]
+
 
