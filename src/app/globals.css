@@ -1,0 +1,90 @@
+@import "tailwindcss";
+
+/* Tailwind v4 tidak punya darkMode:'class' di config JS. Ini penggantinya. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --background: #f8f9fb;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --muted: #4b5563;
+}
+
+.dark {
+  --background: #0a0b0f;
+  --foreground: #f1f5f9;
+  --card: #18181b;
+  --border: #3f3f46;
+  --muted: #a1a1aa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+}
+
+/* Supaya scrollbar, autofill, dan kontrol bawaan browser ikut tema */
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-tap-highlight-color: transparent;
+}
+
+* {
+  scrollbar-color: rgb(203 213 225) transparent;
+}
+.dark * {
+  scrollbar-color: rgb(63 63 70) transparent;
+}
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgb(203 213 225);
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background-color: rgb(63 63 70);
+}
+
+/* Fokus keyboard selalu terlihat di kedua tema */
+:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Layar kasir dipakai di HP: angka jangan dizoom otomatis saat fokus input */
+input,
+select,
+textarea {
+  font-size: 16px;
+}
+
+/* Hilangkan spinner number input — kasir mengetik angka, bukan mengklik panah */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,0 +1,555 @@
+// Aplikasi Toko Plastik & Bahan Kue — V1
+// Kontrak: PRD-Toko-Plastik-Bahan-Kue-V1, pasal 4 dan pasal 7.
+//
+// ATURAN UANG DAN QTY (pasal 7):
+//   - Uang: BigInt, Rupiah bulat. TIDAK ADA Float / Decimal berdesimal.
+//   - Qty satuan dasar: Int. Gram bulat, iket bulat, pcs bulat.
+//   - Tidak ada floating point sama sekali untuk stok maupun uang.
+//
+// CATATAN PENYIMPANGAN TERKENDALI dari PRD pasal 7 (didokumentasikan, bukan improvisasi):
+//   PRD menulis stock_lots menyimpan hpp_per_unit. Itu mustahil sebagai integer
+//   Rupiah: gula Rp 13.500/kg = Rp 13,5 per gram. Menyimpan per-unit memaksa
+//   pembulatan yang bocor beberapa rupiah tiap transaksi.
+//   Yang disimpan: hppTotalAwal + hppSisa (BigInt) berdampingan dengan
+//   qtyAwal + qtySisa (Int). HPP per unit tetap bisa DITAMPILKAN sebagai
+//   hppSisa / qtySisa, dan nilai stok pasal 10 = jumlah hppSisa — persis tanpa selisih.
+//   Uji A3 di PRD tetap lolos identik (lihat tests/fifo.test.ts).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// ENUM
+// ---------------------------------------------------------------------------
+
+/// PRD pasal 3: dua user saja. Tidak ada role gudang terpisah.
+enum Role {
+  OWNER
+  KASIR
+}
+
+/// PRD pasal 4.1. Database hanya integer, tidak ada kg desimal.
+enum SatuanDasar {
+  GRAM
+  IKET
+  PCS
+}
+
+enum PartyTipe {
+  VENDOR
+  CUSTOMER
+}
+
+/// PRD pasal 4.3
+enum CaraBayar {
+  CASH
+  CREDIT
+}
+
+/// PRD pasal 4.3: hapus fisik dilarang, hanya status VOID.
+enum StatusNota {
+  AKTIF
+  VOID
+}
+
+/// Asal lot. OPENING dipakai untuk migrasi data awal (PRD pasal 12).
+enum SumberLot {
+  PURCHASE
+  OPENING
+}
+
+enum ArahPembayaran {
+  VENDOR
+  CUSTOMER
+}
+
+enum ArahKas {
+  MASUK
+  KELUAR
+}
+
+/// PRD pasal 7 tabel cash_entries.
+enum JenisKas {
+  SALE
+  PURCHASE
+  PAYMENT
+  OPEX
+  OWNER_LOAN
+  OWNER_REPAY
+  VOID
+  ADJUST
+  OPENING
+}
+
+/// PRD pasal 4.5
+enum AlasanAdjust {
+  SUSUT
+  RUSAK
+  OPNAME
+}
+
+enum ArahAdjust {
+  KURANG
+  TAMBAH
+}
+
+enum ArahPinjaman {
+  AMBIL
+  KEMBALI
+}
+
+// ---------------------------------------------------------------------------
+// USER & AUDIT
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String    @id @default(cuid())
+  nama         String
+  username     String    @unique
+  passwordHash String
+  role         Role      @default(KASIR)
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  auditLogs   AuditLog[]
+  purchases   Purchase[]
+  sales       Sale[]
+  payments    Payment[]
+  cashEntries CashEntry[]
+  ownerLoans  OwnerLoan[]
+  adjustments StockAdjustment[]
+
+  @@index([username])
+  @@map("users")
+}
+
+/// PRD pasal 7: actor, aksi, entitas, before/after JSON, waktu. Owner only.
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String
+  aksi       String
+  entitas    String
+  entitasId  String?
+  before     Json?
+  after      Json?
+  keterangan String?
+  createdAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([entitas, entitasId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+/// Penomoran nota. Di-lock per baris di dalam transaksi supaya dua kasir
+/// tidak pernah mendapat nomor yang sama (PRD pasal 13: dua kasir bentrok).
+model NotaCounter {
+  key       String   @id
+  terakhir  Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  @@map("nota_counters")
+}
+
+// ---------------------------------------------------------------------------
+// MASTER
+// ---------------------------------------------------------------------------
+
+model Product {
+  id          String      @id @default(cuid())
+  nama        String
+  merek       String
+  kategori    String?
+  satuanDasar SatuanDasar
+
+  /// Nama satuan beli yang terlihat di nota vendor: karung, dus, iket, pcs.
+  namaSatuanBeli String
+  /// PRD pasal 4.1: 1 karung = N gram. Berapa satuan dasar dalam 1 satuan beli.
+  /// Untuk plastik (iket) dan pcs nilainya 1.
+  konversiBeli   Int
+
+  /// PRD pasal 8: harga jual disimpan sebagai rupiah bulat per qty referensi.
+  /// Gula Rp 13.500 per 1000 g  -> hargaJualDefault=13500, hargaJualPerQty=1000.
+  /// Plastik Rp 25.000 per 1 iket -> 25000 / 1.
+  /// Ini yang membuat Rp 13,5 per gram tetap terhitung tanpa float.
+  hargaJualDefault Int
+  hargaJualPerQty  Int @default(1)
+
+  aktif     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  lots          StockLot[]
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+  adjustments   StockAdjustment[]
+
+  @@unique([nama, merek])
+  @@index([aktif])
+  @@map("products")
+}
+
+model Party {
+  id      String    @id @default(cuid())
+  tipe    PartyTipe
+  nama    String
+  telepon String?
+  alamat  String?
+  catatan String?
+  /// Record UMUM (PRD pasal 7) tidak boleh dihapus atau diganti tipenya.
+  isSystem Boolean @default(false)
+  aktif    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  purchases Purchase[]
+  sales     Sale[]
+  payments  Payment[]
+
+  @@unique([tipe, nama])
+  @@index([tipe, aktif])
+  @@map("parties")
+}
+
+// ---------------------------------------------------------------------------
+// PEMBELIAN & LOT FIFO
+// ---------------------------------------------------------------------------
+
+model Purchase {
+  id          String    @id @default(cuid())
+  nomor       String    @unique
+  vendorId    String
+  createdById String
+  tanggal     DateTime  @default(now())
+  cara        CaraBayar
+  /// PRD pasal 4.3: tempo = angka hari, fleksibel. 0 untuk cash.
+  tempoHari   Int       @default(0)
+  jatuhTempo  DateTime?
+
+  total      BigInt
+  /// Sisa hutang nota ini. CASH -> 0 sejak awal.
+  sisaHutang BigInt     @default(0)
+  status     StatusNota @default(AKTIF)
+  catatan    String?
+  voidAt     DateTime?
+  voidAlasan String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  vendor      Party               @relation(fields: [vendorId], references: [id])
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  items       PurchaseItem[]
+  allocations PaymentAllocation[]
+
+  @@index([vendorId, status])
+  @@index([tanggal])
+  @@map("purchases")
+}
+
+model PurchaseItem {
+  id         String @id @default(cuid())
+  purchaseId String
+  productId  String
+
+  /// Qty dalam satuan beli (karung / dus / iket / pcs) — apa yang ditulis vendor.
+  qtyBeli      Int
+  /// Konversi yang berlaku saat nota dibuat. Disalin, bukan dibaca ulang dari
+  /// master — PRD pasal 13: ubah konversi tidak menghitung ulang barang lama.
+  konversiSaat Int
+  /// qtyBeli * konversiSaat. Ini yang masuk stok.
+  qtyDasar     Int
+  /// Total rupiah baris ini. Ongkir/kuli TIDAK masuk sini (PRD pasal 4.2).
+  hppTotal     BigInt
+
+  createdAt DateTime @default(now())
+
+  purchase Purchase  @relation(fields: [purchaseId], references: [id])
+  product  Product   @relation(fields: [productId], references: [id])
+  lot      StockLot?
+
+  @@index([purchaseId])
+  @@map("purchase_items")
+}
+
+/// PRD pasal 4.2: setiap baris pembelian = satu lot.
+model StockLot {
+  id             String    @id @default(cuid())
+  productId      String
+  purchaseItemId String?   @unique
+  sumber         SumberLot @default(PURCHASE)
+
+  qtyAwal Int
+  qtySisa Int
+  /// Total HPP lot saat terbentuk. Lihat catatan penyimpangan di atas.
+  hppTotalAwal BigInt
+  /// Sisa nilai HPP yang belum terpakai. Nilai stok = jumlah hppSisa (pasal 10).
+  hppSisa      BigInt
+
+  purchasedAt DateTime
+  ref         String?
+  aktif       Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product      Product       @relation(fields: [productId], references: [id])
+  purchaseItem PurchaseItem? @relation(fields: [purchaseItemId], references: [id])
+
+  saleConsumptions   SaleLotConsumption[]
+  adjustConsumptions AdjustmentLotConsumption[]
+
+  /// Antrian FIFO: tertua dulu. id ikut supaya urutan deterministik.
+  @@index([productId, aktif, purchasedAt, id])
+  @@map("stock_lots")
+}
+
+// ---------------------------------------------------------------------------
+// PENJUALAN
+// ---------------------------------------------------------------------------
+
+model Sale {
+  id         String    @id @default(cuid())
+  nomor      String    @unique
+  customerId String
+  kasirId    String
+  tanggal    DateTime  @default(now())
+  cara       CaraBayar @default(CASH)
+  tempoHari  Int       @default(0)
+  jatuhTempo DateTime?
+
+  total       BigInt
+  /// HPP FIFO seluruh nota. Laba kotor = total - hppTotal (pasal 10).
+  hppTotal    BigInt
+  sisaPiutang BigInt     @default(0)
+  status      StatusNota @default(AKTIF)
+  catatan     String?
+  voidAt      DateTime?
+  voidAlasan  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  customer    Party               @relation(fields: [customerId], references: [id])
+  kasir       User                @relation(fields: [kasirId], references: [id])
+  items       SaleItem[]
+  allocations PaymentAllocation[]
+
+  @@index([customerId, status])
+  @@index([tanggal])
+  @@index([status, cara])
+  @@map("sales")
+}
+
+model SaleItem {
+  id        String @id @default(cuid())
+  saleId    String
+  productId String
+
+  /// Qty dalam satuan dasar: gram bulat / iket / pcs. PRD A1: 0,25 kg ditolak.
+  qty      Int
+  /// Harga yang dipakai kasir: hargaRef rupiah per qtyRef satuan dasar.
+  /// Boleh diubah kasir, dan yang dipakai tersimpan di sini (PRD pasal 6.2).
+  hargaRef Int
+  qtyRef   Int
+  /// hargaRef * qty / qtyRef, dibulatkan. Ini angka yang dibayar.
+  subtotal BigInt
+  /// HPP FIFO baris ini = jumlah hpp konsumsi lot.
+  hpp      BigInt
+
+  createdAt DateTime @default(now())
+
+  sale         Sale                 @relation(fields: [saleId], references: [id])
+  product      Product              @relation(fields: [productId], references: [id])
+  consumptions SaleLotConsumption[]
+
+  @@index([saleId])
+  @@index([productId])
+  @@map("sale_items")
+}
+
+/// PRD pasal 7: wajib. Tanpa tabel ini FIFO tidak auditable.
+model SaleLotConsumption {
+  id         String @id @default(cuid())
+  saleItemId String
+  lotId      String
+  qty        Int
+  hpp        BigInt
+
+  createdAt DateTime @default(now())
+
+  saleItem SaleItem @relation(fields: [saleItemId], references: [id])
+  lot      StockLot @relation(fields: [lotId], references: [id])
+
+  @@index([saleItemId])
+  @@index([lotId])
+  @@map("sale_lot_consumptions")
+}
+
+// ---------------------------------------------------------------------------
+// PEMBAYARAN (cicilan hutang & piutang)
+// ---------------------------------------------------------------------------
+
+model Payment {
+  id          String         @id @default(cuid())
+  nomor       String         @unique
+  arah        ArahPembayaran
+  partyId     String
+  createdById String
+  tanggal     DateTime       @default(now())
+  total       BigInt
+  catatan     String?
+  status      StatusNota     @default(AKTIF)
+  voidAt      DateTime?
+  voidAlasan  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  party       Party               @relation(fields: [partyId], references: [id])
+  createdBy   User                @relation(fields: [createdById], references: [id])
+  allocations PaymentAllocation[]
+
+  @@index([partyId, arah, status])
+  @@index([tanggal])
+  @@map("payments")
+}
+
+/// PRD pasal 6.3: uang dialokasikan eksplisit ke nota, tidak boleh mengendap
+/// sebagai uang hantu.
+model PaymentAllocation {
+  id         String  @id @default(cuid())
+  paymentId  String
+  purchaseId String?
+  saleId     String?
+  nominal    BigInt
+
+  createdAt DateTime @default(now())
+
+  payment  Payment   @relation(fields: [paymentId], references: [id])
+  purchase Purchase? @relation(fields: [purchaseId], references: [id])
+  sale     Sale?     @relation(fields: [saleId], references: [id])
+
+  @@index([paymentId])
+  @@index([purchaseId])
+  @@index([saleId])
+  @@map("payment_allocations")
+}
+
+// ---------------------------------------------------------------------------
+// KAS
+// ---------------------------------------------------------------------------
+
+/// PRD pasal 4.4: kas hanya bergerak kalau uang benar-benar pindah.
+/// Saldo dihitung sebagai total MASUK dikurangi total KELUAR, bukan kolom
+/// saldo berjalan (kolom berjalan rusak kalau dua transaksi bersamaan).
+model CashEntry {
+  id         String   @id @default(cuid())
+  jenis      JenisKas
+  arah       ArahKas
+  /// Selalu positif. Arah yang menentukan tanda.
+  nominal    BigInt
+  tanggal    DateTime @default(now())
+  keterangan String
+  /// Kategori bebas untuk OPEX: Ongkir, Kuli, Listrik, ...
+  kategori   String?
+  /// Referensi lunak ke entitas asal. Tidak pakai FK supaya satu tabel kas
+  /// bisa menunjuk ke banyak jenis dokumen.
+  refTipe    String?
+  refId      String?
+  createdById String
+
+  createdAt DateTime @default(now())
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([tanggal])
+  @@index([jenis])
+  @@index([refTipe, refId])
+  @@map("cash_entries")
+}
+
+// ---------------------------------------------------------------------------
+// PINJAMAN OWNER
+// ---------------------------------------------------------------------------
+
+/// PRD pasal 4.4: ini PINJAMAN, bukan pembagian laba. Tidak ada cek sudah laba.
+model OwnerLoan {
+  id          String       @id @default(cuid())
+  arah        ArahPinjaman
+  nominal     BigInt
+  tanggal     DateTime     @default(now())
+  catatan     String?
+  status      StatusNota   @default(AKTIF)
+  createdById String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy User @relation(fields: [createdById], references: [id])
+
+  @@index([tanggal])
+  @@map("owner_loans")
+}
+
+// ---------------------------------------------------------------------------
+// PENYESUAIAN STOK
+// ---------------------------------------------------------------------------
+
+/// PRD pasal 4.5: SUSUT | RUSAK | OPNAME, wajib catatan, jalur terpisah dari
+/// penjualan. Selisih tidak boleh diserap diam-diam.
+model StockAdjustment {
+  id        String       @id @default(cuid())
+  nomor     String       @unique
+  productId String
+  alasan    AlasanAdjust
+  arah      ArahAdjust
+  qty       Int
+  /// Wajib. PRD A12: tidak bisa simpan tanpa alasan.
+  catatan   String
+  /// Nilai HPP yang keluar (KURANG) atau masuk (TAMBAH). Kerugian stok, bukan omzet.
+  nilaiHpp  BigInt
+  /// Khusus OPNAME: qty fisik yang dihitung dan qty sistem sebelum koreksi.
+  qtySistem Int?
+  qtyFisik  Int?
+  tanggal   DateTime     @default(now())
+  createdById String
+
+  createdAt DateTime @default(now())
+
+  product   Product @relation(fields: [productId], references: [id])
+  createdBy User    @relation(fields: [createdById], references: [id])
+
+  consumptions AdjustmentLotConsumption[]
+
+  @@index([productId])
+  @@index([tanggal])
+  @@map("stock_adjustments")
+}
+
+model AdjustmentLotConsumption {
+  id           String @id @default(cuid())
+  adjustmentId String
+  lotId        String
+  qty          Int
+  hpp          BigInt
+
+  createdAt DateTime @default(now())
+
+  adjustment StockAdjustment @relation(fields: [adjustmentId], references: [id])
+  lot        StockLot        @relation(fields: [lotId], references: [id])
+
+  @@index([adjustmentId])
+  @@index([lotId])
+  @@map("adjustment_lot_consumptions")
+}
