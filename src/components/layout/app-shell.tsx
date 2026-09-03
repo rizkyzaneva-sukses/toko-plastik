@@ -14,6 +14,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
+  LayoutDashboard,
   Store,
   ShoppingCart,
   Receipt,
@@ -48,6 +49,7 @@ interface ItemMenu {
 }
 
 const MENU: ItemMenu[] = [
+  { href: "/", label: "Dashboard", icon: LayoutDashboard, ownerSaja: true },
   { href: "/kasir", label: "Jual", icon: ShoppingCart, keterangan: "Layar kasir" },
   { href: "/nota-jual", label: "Nota Jual", icon: Receipt },
   { href: "/stok", label: "Stok", icon: PackageSearch },
@@ -85,7 +87,7 @@ export function AppShell({ user, children }: { user: UserRingkas; children: Reac
   const daftarMenu = (
     <nav className="flex flex-col gap-0.5 p-2">
       {menu.map((m) => {
-        const aktif = pathname === m.href || pathname.startsWith(m.href + "/");
+        const aktif = m.href === "/" ? pathname === "/" : pathname === m.href || pathname.startsWith(m.href + "/");
         return (
           <Link
             key={m.href}
