@@ -10,9 +10,10 @@
 import * as React from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Plus, Pencil, Power, UserPlus } from "lucide-react";
+import { Plus, Pencil, Power, UserPlus, Download, Upload } from "lucide-react";
 import { SearchableSelect } from "@/components/ui/searchable-select";
 import { DialogKonfirmasi } from "@/components/ui/dialog-konfirmasi";
+import { DialogImportProduk } from "./dialog-import";
 import {
   Card,
   CardJudul,
@@ -124,6 +125,7 @@ function TabBarang() {
   const [form, setForm] = React.useState({ ...KOSONG });
   const [editId, setEditId] = React.useState<string | null>(null);
   const [nonaktifId, setNonaktifId] = React.useState<string | null>(null);
+  const [bukaImport, setBukaImport] = React.useState(false);
 
   const produkQ = useQuery({
     queryKey: ["produk", "semua"],
@@ -337,7 +339,48 @@ function TabBarang() {
       </Card>
 
       <Card>
-        <CardJudul judul="Daftar barang" />
+        <CardJudul
+          judul="Daftar barang"
+          aksi={
+            <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="/api/produk/export?format=xlsx"
+                download="produk.xlsx"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-200 dark:hover:bg-zinc-700 transition-colors"
+                title="Export semua produk ke Excel (.xlsx)"
+              >
+                <Download className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                Export Excel
+              </a>
+              <a
+                href="/api/produk/export?format=csv"
+                download="produk.csv"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-200 dark:hover:bg-zinc-700 transition-colors"
+                title="Export semua produk ke CSV"
+              >
+                <Download className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                Export CSV
+              </a>
+              <button
+                type="button"
+                onClick={() => setBukaImport(true)}
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-gray-200 dark:hover:bg-zinc-700 transition-colors cursor-pointer"
+                title="Import produk dari file Excel atau CSV"
+              >
+                <Upload className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400" />
+                Import Excel/CSV
+              </button>
+            </div>
+          }
+        />
+        <DialogImportProduk
+          buka={bukaImport}
+          onTutup={() => setBukaImport(false)}
+          onSukses={() => {
+            qc.invalidateQueries({ queryKey: ["produk"] });
+            qc.invalidateQueries({ queryKey: ["laporan-stok"] });
+          }}
+        />
         {produkQ.isLoading ? (
           <SkeletonTabel />
         ) : (produkQ.data?.produk.length ?? 0) === 0 ? (
