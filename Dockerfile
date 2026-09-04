@@ -1,5 +1,6 @@
 # syntax=docker/dockerfile:1
 # Next.js 16 standalone — untuk EasyPanel (Build Method: Dockerfile, Port 3000)
+# Cache bust: 2026-09-04 forced password change
 
 FROM node:22-alpine AS deps
 WORKDIR /app
