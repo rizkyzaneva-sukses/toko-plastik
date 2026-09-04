@@ -268,6 +268,7 @@ function TabBarang() {
               bantuan="Apa yang tertulis di nota vendor: karung, dus, iket, pcs."
             >
               <Input
+                key={`nsb-${form.satuanDasar}`}
                 value={form.namaSatuanBeli}
                 onChange={(e) => set("namaSatuanBeli", e.target.value)}
                 disabled={form.satuanDasar !== "GRAM"}
@@ -284,6 +285,7 @@ function TabBarang() {
               }
             >
               <Input
+                key={`kb-${form.satuanDasar}`}
                 inputMode="numeric"
                 value={form.konversiBeli}
                 onChange={(e) => set("konversiBeli", e.target.value)}
@@ -312,6 +314,7 @@ function TabBarang() {
               }
             >
               <Input
+                key={`hpq-${form.satuanDasar}`}
                 inputMode="numeric"
                 value={form.hargaJualPerQty}
                 onChange={(e) => set("hargaJualPerQty", e.target.value)}
