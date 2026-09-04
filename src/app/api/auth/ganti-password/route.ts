@@ -21,7 +21,10 @@ export const POST = withAuth(async (req, user) => {
 
   await db.user.update({
     where: { id: user.id },
-    data: { passwordHash: await bcrypt.hash(String(passwordBaru), 10) },
+    data: {
+      passwordHash: await bcrypt.hash(String(passwordBaru), 10),
+      mustChangePassword: false,
+    },
   });
 
   await catatAuditLepas({

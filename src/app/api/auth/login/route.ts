@@ -81,5 +81,11 @@ export async function POST(req: Request) {
   });
 
   percobaan.delete(ip);
+
+  // PRD pasal 14: password seed wajib diganti setelah login pertama.
+  if (user.mustChangePassword) {
+    return NextResponse.json({ ok: true, nama: user.nama, role: user.role, mustChangePassword: true });
+  }
+
   return NextResponse.json({ ok: true, nama: user.nama, role: user.role });
 }

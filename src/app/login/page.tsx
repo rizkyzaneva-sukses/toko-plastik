@@ -36,8 +36,13 @@ function FormLogin() {
       }
 
       toast.success(`Selamat datang, ${data.nama}`);
-      // Halaman tujuan menyesuaikan role di server, jadi cukup dorong ke returnTo.
-      router.push(returnTo);
+      // PRD pasal 14: kalau password seed masih aktif, paksa ganti dulu.
+      if (data.mustChangePassword) {
+        router.push("/ganti-password");
+      } else {
+        // Halaman tujuan menyesuaikan role di server, jadi cukup dorong ke returnTo.
+        router.push(returnTo);
+      }
       router.refresh();
     } catch {
       setError("Tidak bisa menghubungi server. Cek koneksi internet.");

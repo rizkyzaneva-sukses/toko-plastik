@@ -39,23 +39,25 @@ async function main() {
 
   const owner = await prisma.user.upsert({
     where: { username: "owner" },
-    update: {},
+    update: { mustChangePassword: true },
     create: {
       nama: "Owner Toko",
       username: "owner",
       passwordHash: await bcrypt.hash(passwordOwner, 10),
       role: "OWNER",
+      mustChangePassword: true,
     },
   });
 
   const kasir = await prisma.user.upsert({
     where: { username: "kasir" },
-    update: {},
+    update: { mustChangePassword: true },
     create: {
       nama: "Kasir",
       username: "kasir",
       passwordHash: await bcrypt.hash(passwordKasir, 10),
       role: "KASIR",
+      mustChangePassword: true,
     },
   });
 

@@ -16,6 +16,7 @@ export interface AuthUser {
   nama: string;
   username: string;
   role: Role;
+  mustChangePassword: boolean;
 }
 
 /** Baca user + role SEGAR dari DB. Jangan pernah percaya role dari cookie. */
@@ -25,7 +26,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
 
   const user = await getPrisma().user.findFirst({
     where: { id: session.userId, isActive: true },
-    select: { id: true, nama: true, username: true, role: true },
+    select: { id: true, nama: true, username: true, role: true, mustChangePassword: true },
   });
 
   return (user as AuthUser) ?? null;
