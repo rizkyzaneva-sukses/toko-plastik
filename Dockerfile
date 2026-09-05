@@ -33,7 +33,7 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/src/generated/prisma ./src/generated/prisma
 
 # Install prisma CLI untuk migrate deploy + psql untuk seed
-RUN npm install -g prisma@7.10.0 && apk add --no-cache postgresql-client
+RUN npm install prisma@7.10.0 && apk add --no-cache postgresql-client
 
 # Entrypoint: jalankan migrate deploy otomatis lalu start server
 COPY docker-entrypoint.sh ./docker-entrypoint.sh
