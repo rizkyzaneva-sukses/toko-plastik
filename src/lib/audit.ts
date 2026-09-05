@@ -16,6 +16,7 @@ export type AksiAudit =
   | "OPNAME"
   | "PAYMENT"
   | "OWNER_LOAN"
+  | "SETOR_MODAL"
   | "OPEX";
 
 interface CatatArgs {

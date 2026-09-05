@@ -38,6 +38,7 @@ const LABEL_JENIS: Record<string, string> = {
   VOID: "Pembatalan nota",
   ADJUST: "Penyesuaian",
   OPENING: "Saldo awal",
+  SETOR_MODAL: "Setoran modal",
 };
 
 const KATEGORI_BIAYA = [
@@ -86,6 +87,10 @@ export function PanelKas() {
   const [kategori, setKategori] = React.useState<string | null>("Ongkir");
   const [keterangan, setKeterangan] = React.useState("");
 
+  const [sumberModal, setSumberModal] = React.useState<string | null>("PRIBADI");
+  const [nominalModal, setNominalModal] = React.useState("");
+  const [keteranganModal, setKeteranganModal] = React.useState("");
+
   const simpanBiaya = useMutation({
     mutationFn: () =>
       fetchJson("/api/kas/biaya", {
@@ -98,6 +103,15 @@ export function PanelKas() {
       setKeterangan("");
       qc.invalidateQueries({ queryKey: ["kas"] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
+  const simpanModal = useMutation({
+    mutationFn: () => fetchJson("/api/kas/modal", {
+      method: "POST",
+      body: JSON.stringify({ sumber: sumberModal, nominal: Number(nominalModal), keterangan: keteranganModal }),
+    }),
+    onSuccess: () => { toast.success("Setoran modal tercatat."); setNominalModal(""); setKeteranganModal(""); qc.invalidateQueries({ queryKey: ["kas"] }); },
     onError: (e: Error) => toast.error(e.message),
   });
 

@@ -301,3 +301,32 @@ export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCell
     />
   );
 }
+
+// RupiahInput - input angka rupiah tampil terformat (1.000.000)
+
+function formatRupiahDisplay(v: string): string {
+  const nums = v.replace(/[^0-9]/g, "");
+  if (!nums) return "";
+  return Number(nums).toLocaleString("id-ID");
+}
+
+interface RupiahInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+  value: string;
+  onChange: (v: string) => void;
+}
+
+export function RupiahInput({ value, onChange, className, ...props }: RupiahInputProps) {
+  const [focused, setFocused] = React.useState(false);
+  const displayValue = focused ? value : formatRupiahDisplay(value);
+  return (
+    <Input
+      {...props}
+      value={displayValue}
+      onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
+      onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
+      onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
+      className={className}
+      inputMode="numeric"
+    />
+  );
+}

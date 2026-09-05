@@ -62,6 +62,7 @@ enum StatusNota {
 enum SumberLot {
   PURCHASE
   OPENING
+  SETOR_MODAL
 }
 
 enum ArahPembayaran {
@@ -85,6 +86,7 @@ enum JenisKas {
   VOID
   ADJUST
   OPENING
+  SETOR_MODAL
 }
 
 /// PRD pasal 4.5

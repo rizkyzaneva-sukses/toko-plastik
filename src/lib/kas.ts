@@ -21,7 +21,8 @@ export type JenisKas =
   | "OWNER_REPAY"
   | "VOID"
   | "ADJUST"
-  | "OPENING";
+  | "OPENING"
+  | "SETOR_MODAL";
 
 interface CatatKasArgs {
   jenis: JenisKas;
@@ -101,4 +102,5 @@ export const LABEL_JENIS_KAS: Record<JenisKas, string> = {
   VOID: "Pembatalan nota",
   ADJUST: "Penyesuaian",
   OPENING: "Saldo awal",
+  SETOR_MODAL: "Setoran modal",
 };

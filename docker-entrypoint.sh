@@ -2,7 +2,7 @@
 set -e
 
 echo "==> Running prisma migrate deploy..."
-npx prisma migrate deploy
+prisma migrate deploy
 echo "==> Migrations applied successfully"
 
 echo "==> Running seed (idempotent)..."

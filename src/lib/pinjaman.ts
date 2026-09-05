@@ -159,6 +159,44 @@ export async function catatSaldoAwalKas(nominalInput: number, userId: string) {
   });
 }
 
+
+export interface ModalInput {
+  sumber: "PINJAMAN" | "INVESTOR" | "PRIBADI";
+  nominal: number;
+  keterangan: string;
+  tanggal?: string;
+}
+
+export async function catatModal(input: ModalInput, userId: string) {
+  const nominal = rupiahDariInput(input.nominal, "Nominal modal");
+  if (nominal <= 0n) throw new AturanBisnisError("Nominal modal harus lebih dari 0");
+  const keterangan = input.keterangan?.trim();
+  if (!keterangan) throw new AturanBisnisError("Keterangan wajib diisi");
+  if (!["PINJAMAN", "INVESTOR", "PRIBADI"].includes(input.sumber)) {
+    throw new AturanBisnisError("Sumber modal tidak valid");
+  }
+  const tanggal = input.tanggal ? new Date(input.tanggal) : new Date();
+  if (Number.isNaN(tanggal.getTime())) throw new AturanBisnisError("Tanggal tidak valid");
+  const labelSumber: Record<string, string> = {
+    PINJAMAN: "Pinjaman dari pihak lain",
+    INVESTOR: "Setoran investor",
+    PRIBADI: "Uang pribadi owner",
+  };
+  return getPrisma().$transaction(async (tx) => {
+    const entry = await catatKas(tx, {
+      jenis: "SETOR_MODAL", arah: "MASUK", nominal,
+      keterangan: `[${labelSumber[input.sumber]}] ${keterangan}`,
+      kategori: input.sumber, userId, tanggal,
+    });
+    await catatAudit(tx, {
+      userId, aksi: "SETOR_MODAL", entitas: "CashEntry", entitasId: entry.id,
+      after: { nominal, sumber: input.sumber, keterangan },
+      keterangan: `Setoran modal ${labelSumber[input.sumber]}: Rp ${nominal.toLocaleString("id-ID")}`,
+    });
+    return entry;
+  });
+}
+
 export async function daftarPinjaman(db: Tx | ReturnType<typeof getPrisma> = getPrisma()) {
   return db.ownerLoan.findMany({
     where: { status: "AKTIF" },
