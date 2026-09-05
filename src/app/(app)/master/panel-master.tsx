@@ -27,6 +27,8 @@ import {
   Th,
   Td,
   Badge,
+  AngkaInput,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatAngka, formatTanggalJam } from "@/lib/utils";
 import { SATUAN_LABEL, SATUAN_OPSI, formatQtyPanjang, type SatuanDasar } from "@/lib/satuan";
@@ -284,11 +286,10 @@ function TabBarang() {
                   : "Untuk iket dan pcs nilainya selalu 1."
               }
             >
-              <Input
+              <AngkaInput
                 key={`kb-${form.satuanDasar}`}
-                inputMode="numeric"
                 value={form.konversiBeli}
-                onChange={(e) => set("konversiBeli", e.target.value)}
+                onChange={(v) => set("konversiBeli", v)}
                 disabled={form.satuanDasar !== "GRAM"}
                 placeholder="50000"
               />
@@ -297,10 +298,9 @@ function TabBarang() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Harga jual default (Rp)" wajib>
-              <Input
-                inputMode="numeric"
+              <RupiahInput
                 value={form.hargaJualDefault}
-                onChange={(e) => set("hargaJualDefault", e.target.value)}
+                onChange={(v) => set("hargaJualDefault", v)}
                 placeholder="13500"
               />
             </Field>
@@ -313,11 +313,10 @@ function TabBarang() {
                   : "Selalu 1 untuk iket dan pcs."
               }
             >
-              <Input
+              <AngkaInput
                 key={`hpq-${form.satuanDasar}`}
-                inputMode="numeric"
                 value={form.hargaJualPerQty}
-                onChange={(e) => set("hargaJualPerQty", e.target.value)}
+                onChange={(v) => set("hargaJualPerQty", v)}
                 disabled={form.satuanDasar !== "GRAM"}
               />
             </Field>

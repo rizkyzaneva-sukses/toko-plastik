@@ -29,6 +29,8 @@ import {
   Th,
   Td,
   Badge,
+  AngkaInput,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatTanggal, formatAngka, labelTempo } from "@/lib/utils";
 import { formatQtyPanjang, SATUAN_LABEL, type SatuanDasar } from "@/lib/satuan";
@@ -241,10 +243,9 @@ export function PanelBeli() {
                     produkTerpilih.konversiBeli
                   )} ${SATUAN_LABEL[produkTerpilih.satuanDasar]}`}
                 >
-                  <Input
-                    inputMode="numeric"
+                  <AngkaInput
                     value={qtyBeli}
-                    onChange={(e) => setQtyBeli(e.target.value)}
+                    onChange={setQtyBeli}
                     placeholder="1"
                   />
                 </Field>
@@ -253,10 +254,9 @@ export function PanelBeli() {
                   label="Total harga beli baris ini"
                   bantuan="Rupiah bulat. Ongkir dan kuli TIDAK dimasukkan di sini."
                 >
-                  <Input
-                    inputMode="numeric"
+                  <RupiahInput
                     value={hpp}
-                    onChange={(e) => setHpp(e.target.value)}
+                    onChange={setHpp}
                     placeholder="600000"
                   />
                 </Field>

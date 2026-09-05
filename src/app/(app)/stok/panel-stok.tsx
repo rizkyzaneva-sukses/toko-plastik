@@ -28,6 +28,8 @@ import {
   Th,
   Td,
   Badge,
+  AngkaInput,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatTanggal } from "@/lib/utils";
 import { formatQtyPanjang, SATUAN_LABEL, type SatuanDasar } from "@/lib/satuan";
@@ -345,7 +347,7 @@ function FormPenyesuaian({
               wajib
               bantuan={`Stok sistem sekarang ${formatQtyPanjang(produk.qty, produk.satuanDasar)}. Pengurangan memotong lot tertua.`}
             >
-              <Input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
+              <AngkaInput value={qty} onChange={setQty} />
             </Field>
           )}
 
@@ -356,10 +358,9 @@ function FormPenyesuaian({
                 wajib
                 bantuan={`Sistem mencatat ${formatQtyPanjang(produk.qty, produk.satuanDasar)}. Isi angka hasil hitungan nyata, boleh 0.`}
               >
-                <Input
-                  inputMode="numeric"
+                <AngkaInput
                   value={qtyFisik}
-                  onChange={(e) => setQtyFisik(e.target.value)}
+                  onChange={setQtyFisik}
                 />
               </Field>
 
@@ -369,10 +370,9 @@ function FormPenyesuaian({
                   wajib
                   bantuan="Stok sistem kosong, jadi tidak ada dasar harga. Isi taksiran owner."
                 >
-                  <Input
-                    inputMode="numeric"
+                  <RupiahInput
                     value={taksiran}
-                    onChange={(e) => setTaksiran(e.target.value)}
+                    onChange={setTaksiran}
                   />
                 </Field>
               )}
@@ -519,7 +519,7 @@ function FormStokAwal({
                   : `${SATUAN_LABEL[produk.satuanDasar]} bulat.`
               }
             >
-              <Input inputMode="numeric" value={qty} onChange={(e) => setQty(e.target.value)} />
+              <AngkaInput value={qty} onChange={setQty} />
             </Field>
 
             <Field
@@ -527,7 +527,7 @@ function FormStokAwal({
               wajib
               bantuan="Total rupiah, bukan per satuan. Contoh: 50 kg gula taksiran Rp 600.000."
             >
-              <Input inputMode="numeric" value={hpp} onChange={(e) => setHpp(e.target.value)} />
+              <RupiahInput value={hpp} onChange={setHpp} />
             </Field>
           </>
         )}

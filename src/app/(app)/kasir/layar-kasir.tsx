@@ -26,6 +26,8 @@ import {
   SkeletonTabel,
   Peringatan,
   Badge,
+  AngkaInput,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatAngka } from "@/lib/utils";
 import { formatQtyPanjang, tombolCepat, SATUAN_LABEL, type SatuanDasar } from "@/lib/satuan";
@@ -309,10 +311,9 @@ export function LayarKasir() {
                       : `${SATUAN_LABEL[produkTerpilih.satuanDasar]} bulat.`
                   }
                 >
-                  <Input
-                    inputMode="numeric"
+                  <AngkaInput
                     value={qtyTeks}
-                    onChange={(e) => setQtyTeks(e.target.value)}
+                    onChange={setQtyTeks}
                     onKeyDown={(e) => e.key === "Enter" && tambahBaris()}
                     placeholder={produkTerpilih.satuanDasar === "GRAM" ? "250" : "1"}
                   />
@@ -326,10 +327,9 @@ export function LayarKasir() {
                   }`}
                   bantuan="Boleh diubah. Harga yang dipakai tersimpan di nota."
                 >
-                  <Input
-                    inputMode="numeric"
+                  <RupiahInput
                     value={hargaTeks}
-                    onChange={(e) => setHargaTeks(e.target.value)}
+                    onChange={setHargaTeks}
                   />
                 </Field>
               </div>

@@ -6,7 +6,7 @@
 
 import * as React from "react";
 import { Loader2, Inbox, AlertTriangle, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatRibuan, posisiSetelahDigitKe } from "@/lib/utils";
 
 // --------------------------------------------------------------------------
 // Card
@@ -302,31 +302,51 @@ export function Td({ className, ...props }: React.TdHTMLAttributes<HTMLTableCell
   );
 }
 
-// RupiahInput - input angka rupiah tampil terformat (1.000.000)
+// AngkaInput / RupiahInput
+//
+// Input angka bulat yang SELALU tampil dengan pemisah ribuan (1.000.000),
+// termasuk saat sedang diketik, supaya jumlah nol gampang dicek sekilas.
+// Nilai yang diteruskan ke onChange tetap digit polos ("1000000"), jadi
+// pemanggilnya tidak perlu tahu soal format.
 
-function formatRupiahDisplay(v: string): string {
-  const nums = v.replace(/[^0-9]/g, "");
-  if (!nums) return "";
-  return Number(nums).toLocaleString("id-ID");
-}
-
-interface RupiahInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
+interface AngkaInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "onChange" | "value"> {
   value: string;
   onChange: (v: string) => void;
 }
 
-export function RupiahInput({ value, onChange, className, ...props }: RupiahInputProps) {
-  const [focused, setFocused] = React.useState(false);
-  const displayValue = focused ? value : formatRupiahDisplay(value);
+export function AngkaInput({ value, onChange, className, ...props }: AngkaInputProps) {
+  const ref = React.useRef<HTMLInputElement>(null);
+  const digitSebelumCaret = React.useRef<number | null>(null);
+  const tampil = formatRibuan(value);
+
+  // Menambah/menghapus titik menggeser panjang teks, jadi caret harus
+  // dikembalikan ke digit yang sama. Tanpa ini, mengetik di tengah angka
+  // melempar kursor ke ujung kanan.
+  React.useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el || digitSebelumCaret.current === null) return;
+    const posisi = posisiSetelahDigitKe(tampil, digitSebelumCaret.current);
+    digitSebelumCaret.current = null;
+    el.setSelectionRange(posisi, posisi);
+  }, [tampil]);
+
   return (
     <Input
       {...props}
-      value={displayValue}
-      onChange={(e) => onChange(e.target.value.replace(/[^0-9]/g, ""))}
-      onFocus={(e) => { setFocused(true); props.onFocus?.(e); }}
-      onBlur={(e) => { setFocused(false); props.onBlur?.(e); }}
-      className={className}
+      ref={ref}
+      value={tampil}
       inputMode="numeric"
+      onChange={(e) => {
+        const teks = e.target.value;
+        const caret = e.target.selectionStart ?? teks.length;
+        digitSebelumCaret.current = teks.slice(0, caret).replace(/[^0-9]/g, "").length;
+        onChange(teks.replace(/[^0-9]/g, ""));
+      }}
+      className={className}
     />
   );
 }
+
+/** Nama khusus untuk nominal rupiah. Perilakunya sama dengan AngkaInput. */
+export const RupiahInput = AngkaInput;

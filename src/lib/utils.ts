@@ -106,3 +106,31 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
   }
   return data as T;
 }
+
+// --------------------------------------------------------------------------
+// Angka yang sedang diketik (dipakai AngkaInput/RupiahInput)
+// --------------------------------------------------------------------------
+
+/** Buang semua non-digit lalu beri pemisah ribuan: "1000000" -> "1.000.000". */
+export function formatRibuan(nilai: string): string {
+  const angka = nilai.replace(/[^0-9]/g, "");
+  if (!angka) return "";
+  return Number(angka).toLocaleString("id-ID");
+}
+
+/**
+ * Posisi karakter tepat setelah digit ke-n pada teks terformat.
+ * Dipakai untuk mengembalikan caret setelah titik ribuan bergeser, supaya
+ * mengetik di tengah angka tidak melempar kursor ke ujung kanan.
+ */
+export function posisiSetelahDigitKe(teks: string, jumlahDigit: number): number {
+  if (jumlahDigit <= 0) return 0;
+  let digit = 0;
+  for (let i = 0; i < teks.length; i++) {
+    if (teks[i] >= "0" && teks[i] <= "9") {
+      digit++;
+      if (digit === jumlahDigit) return i + 1;
+    }
+  }
+  return teks.length;
+}

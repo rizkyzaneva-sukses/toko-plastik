@@ -26,6 +26,7 @@ import {
   Th,
   Td,
   Badge,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatTanggal, labelTempo, hariLewatTempo } from "@/lib/utils";
 
@@ -251,10 +252,9 @@ export function PanelPelunasan({ isOwner }: { isOwner: boolean }) {
                     wajib
                     bantuan="Cicilan boleh. Kelebihan bayar ditolak, bukan disimpan sebagai saldo."
                   >
-                    <Input
-                      inputMode="numeric"
+                    <RupiahInput
                       value={nominal}
-                      onChange={(e) => setNominal(e.target.value)}
+                      onChange={setNominal}
                       placeholder="0"
                     />
                   </Field>

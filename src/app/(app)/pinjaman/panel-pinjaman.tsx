@@ -26,6 +26,7 @@ import {
   Th,
   Td,
   Badge,
+  RupiahInput,
 } from "@/components/ui/dasar";
 import { fetchJson, formatRupiah, formatTanggalJam } from "@/lib/utils";
 
@@ -129,10 +130,9 @@ export function PanelPinjaman() {
           </div>
 
           <Field label="Nominal" wajib>
-            <Input
-              inputMode="numeric"
+            <RupiahInput
               value={nominal}
-              onChange={(e) => setNominal(e.target.value)}
+              onChange={setNominal}
               placeholder="0"
             />
           </Field>
