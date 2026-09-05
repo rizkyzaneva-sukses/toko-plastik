@@ -111,11 +111,23 @@ export async function fetchJson<T>(url: string, init?: RequestInit): Promise<T> 
 // Angka yang sedang diketik (dipakai AngkaInput/RupiahInput)
 // --------------------------------------------------------------------------
 
-/** Buang semua non-digit lalu beri pemisah ribuan: "1000000" -> "1.000.000". */
+/**
+ * Sisakan digitnya saja dan buang nol di depan: "Rp 007x" -> "7", "000" -> "0".
+ * Ini nilai yang disimpan di state dan dikirim ke API.
+ */
+export function hanyaDigit(nilai: string): string {
+  return nilai.replace(/[^0-9]/g, "").replace(/^0+(?=\d)/, "");
+}
+
+/**
+ * Beri pemisah ribuan: "1000000" -> "1.000.000".
+ * Sengaja tidak lewat Number() supaya digit yang sangat panjang tidak
+ * kehilangan presisi saat masih diketik.
+ */
 export function formatRibuan(nilai: string): string {
-  const angka = nilai.replace(/[^0-9]/g, "");
+  const angka = hanyaDigit(nilai);
   if (!angka) return "";
-  return Number(angka).toLocaleString("id-ID");
+  return angka.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
 /**

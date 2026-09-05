@@ -6,7 +6,7 @@
 
 import * as React from "react";
 import { Loader2, Inbox, AlertTriangle, RefreshCw } from "lucide-react";
-import { cn, formatRibuan, posisiSetelahDigitKe } from "@/lib/utils";
+import { cn, formatRibuan, hanyaDigit, posisiSetelahDigitKe } from "@/lib/utils";
 
 // --------------------------------------------------------------------------
 // Card
@@ -337,11 +337,34 @@ export function AngkaInput({ value, onChange, className, ...props }: AngkaInputP
       ref={ref}
       value={tampil}
       inputMode="numeric"
+      onKeyDown={(e) => {
+        props.onKeyDown?.(e);
+        if (e.defaultPrevented) return;
+        const el = e.currentTarget;
+        const mulai = el.selectionStart ?? 0;
+        const akhir = el.selectionEnd ?? 0;
+        if (mulai !== akhir) return; // ada teks terblok: biarkan perilaku bawaan
+
+        // Titik ribuan bukan karakter yang berdiri sendiri. Menghapusnya akan
+        // langsung dipasang ulang, jadi tombol terasa tidak berfungsi. Yang
+        // dimaksud user pasti digit di baliknya.
+        if (e.key === "Backspace" && mulai > 0 && el.value[mulai - 1] === ".") {
+          e.preventDefault();
+          const ke = el.value.slice(0, mulai - 1).replace(/[^0-9]/g, "").length;
+          digitSebelumCaret.current = ke - 1;
+          onChange(hanyaDigit(value.slice(0, ke - 1) + value.slice(ke)));
+        } else if (e.key === "Delete" && el.value[mulai] === ".") {
+          e.preventDefault();
+          const ke = el.value.slice(0, mulai + 1).replace(/[^0-9]/g, "").length;
+          digitSebelumCaret.current = ke;
+          onChange(hanyaDigit(value.slice(0, ke) + value.slice(ke + 1)));
+        }
+      }}
       onChange={(e) => {
         const teks = e.target.value;
         const caret = e.target.selectionStart ?? teks.length;
         digitSebelumCaret.current = teks.slice(0, caret).replace(/[^0-9]/g, "").length;
-        onChange(teks.replace(/[^0-9]/g, ""));
+        onChange(hanyaDigit(teks));
       }}
       className={className}
     />

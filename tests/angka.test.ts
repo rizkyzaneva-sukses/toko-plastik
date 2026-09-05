@@ -5,7 +5,7 @@
  */
 
 import { describe, it, expect } from "vitest";
-import { formatRibuan, posisiSetelahDigitKe } from "@/lib/utils";
+import { formatRibuan, hanyaDigit, posisiSetelahDigitKe } from "@/lib/utils";
 
 describe("formatRibuan", () => {
   it("memberi titik tiap tiga digit", () => {
@@ -58,5 +58,25 @@ describe("posisiSetelahDigitKe", () => {
     expect(sesudah).toBe("15.200.000");
     // Caret harus berada tepat setelah digit ke-3 ("2"), yaitu indeks 4.
     expect(posisiSetelahDigitKe(sesudah, 3)).toBe(4);
+  });
+});
+
+describe("hanyaDigit", () => {
+  it("menyisakan digit saja", () => {
+    expect(hanyaDigit("Rp 1.500x")).toBe("1500");
+    expect(hanyaDigit("")).toBe("");
+  });
+
+  it("membuang nol di depan tapi menyisakan satu nol", () => {
+    expect(hanyaDigit("007")).toBe("7");
+    expect(hanyaDigit("000000")).toBe("0");
+    expect(hanyaDigit("0")).toBe("0");
+  });
+});
+
+describe("formatRibuan pada angka sangat panjang", () => {
+  it("tidak kehilangan presisi seperti Number()", () => {
+    // 18 digit: di luar jangkauan aman Number, jadi harus diproses sebagai teks.
+    expect(formatRibuan("123456789012345678")).toBe("123.456.789.012.345.678");
   });
 });
