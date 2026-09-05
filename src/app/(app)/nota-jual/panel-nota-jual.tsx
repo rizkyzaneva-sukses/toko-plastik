@@ -114,13 +114,13 @@ export function PanelNotaJual({ isOwner }: { isOwner: boolean }) {
             <thead>
               <tr>
                 <Th></Th>
-                <Th>Waktu</Th>
+                <Th className="hidden sm:table-cell">Waktu</Th>
                 <Th>Nomor</Th>
                 <Th>Customer</Th>
                 <Th>Cara</Th>
                 <Th className="text-right">Total</Th>
-                {isOwner && <Th className="text-right">Laba kotor</Th>}
-                <Th></Th>
+                {isOwner && <Th className="hidden md:table-cell text-right">Laba kotor</Th>}
+                <Th className="hidden sm:table-cell"></Th>
               </tr>
             </thead>
             <tbody>
@@ -140,7 +140,7 @@ export function PanelNotaJual({ isOwner }: { isOwner: boolean }) {
                         )}
                       </button>
                     </Td>
-                    <Td className="whitespace-nowrap text-xs">{formatTanggalJam(n.tanggal)}</Td>
+                    <Td className="hidden sm:table-cell whitespace-nowrap text-xs">{formatTanggalJam(n.tanggal)}</Td>
                     <Td className="whitespace-nowrap font-mono text-xs">{n.nomor}</Td>
                     <Td>
                       <span className="block">{n.customer.nama}</span>
@@ -168,11 +168,11 @@ export function PanelNotaJual({ isOwner }: { isOwner: boolean }) {
                       )}
                     </Td>
                     {isOwner && (
-                      <Td className="text-right tabular-nums">
+                      <Td className="hidden md:table-cell text-right tabular-nums">
                         {n.status === "VOID" ? "-" : formatRupiah(n.total - n.hppTotal)}
                       </Td>
                     )}
-                    <Td>
+                    <Td className="hidden sm:table-cell">
                       {isOwner && n.status === "AKTIF" && (
                         <button
                           onClick={() => setVoidId(n.id)}
@@ -187,10 +187,10 @@ export function PanelNotaJual({ isOwner }: { isOwner: boolean }) {
 
                   {buka === n.id && (
                     <tr>
-                      <Td colSpan={isOwner ? 8 : 7} className="bg-gray-50 dark:bg-zinc-900/60">
-                        <ul className="space-y-1 py-1 text-sm">
+                      <Td colSpan={isOwner ? 8 : 7} className="bg-gray-50 dark:bg-zinc-900/60 p-4">
+                        <ul className="space-y-1 py-1 text-sm mb-3">
                           {n.items.map((it) => (
-                            <li key={it.id} className="flex flex-wrap justify-between gap-2">
+                            <li key={it.id} className="flex flex-wrap justify-between gap-2 border-b border-gray-200/50 dark:border-zinc-700/50 pb-1 last:border-0 last:pb-0">
                               <span>
                                 {it.product.nama} {it.product.merek} &mdash;{" "}
                                 {formatQtyPanjang(it.qty, it.product.satuanDasar)}
@@ -206,11 +206,29 @@ export function PanelNotaJual({ isOwner }: { isOwner: boolean }) {
                             </li>
                           ))}
                         </ul>
-                        {n.status === "VOID" && n.voidAlasan && (
-                          <p className="mt-2 text-xs text-red-700 dark:text-red-300">
-                            Alasan void: {n.voidAlasan}
-                          </p>
-                        )}
+                        
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-gray-200 dark:border-zinc-700">
+                          <div className="text-xs text-gray-600 dark:text-gray-400 sm:hidden">
+                            Waktu: {formatTanggalJam(n.tanggal)}
+                            {isOwner && n.status !== "VOID" && (
+                               <><br/>Laba Kotor: {formatRupiah(n.total - n.hppTotal)}</>
+                            )}
+                          </div>
+                          
+                          {n.status === "VOID" && n.voidAlasan ? (
+                            <p className="text-xs text-red-700 dark:text-red-300">
+                              Alasan void: {n.voidAlasan}
+                            </p>
+                          ) : isOwner && n.status === "AKTIF" ? (
+                            <button
+                              onClick={() => setVoidId(n.id)}
+                              className="sm:hidden inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40"
+                            >
+                              <Ban className="h-4 w-4" />
+                              Void Nota Ini
+                            </button>
+                          ) : <span />}
+                        </div>
                       </Td>
                     </tr>
                   )}

@@ -149,6 +149,8 @@ export function SearchableSelect(props: SingleProps | MultiProps) {
           <Popover.Content
             align="start"
             sideOffset={4}
+            avoidCollisions={true}
+            collisionPadding={8}
             className={cn(
               "z-50 w-[var(--radix-popover-trigger-width)] overflow-hidden rounded-lg border shadow-lg",
               "border-gray-200 bg-white dark:border-zinc-700 dark:bg-zinc-800"

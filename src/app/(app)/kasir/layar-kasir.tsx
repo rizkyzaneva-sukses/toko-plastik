@@ -227,7 +227,7 @@ export function LayarKasir() {
   }
 
   return (
-    <div className="space-y-4 pb-32">
+    <div className="space-y-4 pb-safe-bar">
       {notaSelesai && (
         <Card className="border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/20">
           <div className="flex items-start gap-3">
@@ -285,13 +285,13 @@ export function LayarKasir() {
 
           {produkTerpilih && (
             <>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-4 gap-2">
                 {tombolCepat(produkTerpilih.satuanDasar).map((t) => (
                   <button
                     key={t.qty}
                     type="button"
                     onClick={() => tambahBaris(t.qty)}
-                    className="min-h-11 rounded-lg border border-gray-300 bg-white px-4 text-sm font-semibold
+                    className="min-h-11 rounded-lg border border-gray-300 bg-white px-2 text-sm font-semibold
                                text-gray-900 hover:bg-gray-50 dark:border-zinc-600 dark:bg-zinc-800
                                dark:text-gray-50 dark:hover:bg-zinc-700"
                   >
@@ -441,9 +441,9 @@ export function LayarKasir() {
         </div>
       </Card>
 
-      {/* Bilah total menempel di bawah — tidak tertutup keyboard HP */}
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-1">
+      {/* Bilah total menempel di bawah — pakai pb-safe untuk iOS home indicator */}
+      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white pb-safe dark:border-zinc-700 dark:bg-zinc-900">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 p-3 px-4">
           <div className="min-w-0 flex-1">
             <p className="text-xs text-gray-600 dark:text-gray-400">
               Total {keranjang.length > 0 && <Badge>{keranjang.length} baris</Badge>}

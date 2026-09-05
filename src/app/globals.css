@@ -88,3 +88,23 @@ input[type="number"] {
     display: none !important;
   }
 }
+
+/* Safe area inset — iOS notch & home indicator */
+.pb-safe {
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+.pt-safe {
+  padding-top: max(0px, env(safe-area-inset-top));
+}
+/* Untuk fixed bottom bar: padding bottom = safe area + tinggi bar */
+.pb-safe-bar {
+  padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+}
+
+/* Sembunyikan scrollbar visual tapi tetap bisa scroll (tab row, dll.) */
+.scrollbar-none {
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}

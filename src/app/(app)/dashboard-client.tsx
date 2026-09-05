@@ -135,9 +135,9 @@ export function DashboardClient() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
           {/* Quick preset buttons */}
-          <div className="flex rounded-lg border border-gray-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-800">
+          <div className="flex shrink-0 rounded-lg border border-gray-200 bg-white p-1 dark:border-zinc-700 dark:bg-zinc-800">
             {(
               [
                 { key: "7hari", label: "7 Hari" },
@@ -150,7 +150,7 @@ export function DashboardClient() {
               <button
                 key={item.key}
                 onClick={() => handlePilihMode(item.key)}
-                className={`rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
+                className={`whitespace-nowrap rounded-md px-2.5 py-1 text-xs font-medium transition-colors ${
                   mode === item.key
                     ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
                     : "text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-200"
@@ -166,6 +166,7 @@ export function DashboardClient() {
             onClick={() => q.refetch()}
             memuat={q.isFetching}
             title="Muat ulang data"
+            className="shrink-0"
           >
             <RefreshCw className="h-4 w-4" />
           </Tombol>
@@ -198,7 +199,7 @@ export function DashboardClient() {
         <SkeletonTabel baris={2} />
       ) : r ? (
         <>
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <KartuAngka
               ikon={<Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />}
               label="Saldo Kas"
@@ -222,7 +223,7 @@ export function DashboardClient() {
             />
           </div>
 
-          <div className="grid gap-3 grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <KartuAngka
               ikon={<ArrowDownLeft className="h-5 w-5 text-amber-600 dark:text-amber-400" />}
               label="Piutang Customer"
@@ -246,11 +247,17 @@ export function DashboardClient() {
       ) : null}
 
       {/* Peringatan kas — PRD pasal 10, WAJIB */}
-      <Peringatan judul="Laba bukan izin menarik uang">
-        Laba kotor bisa lebih besar dari kas karena sebagian sudah berubah menjadi stok dan
-        piutang. Yang boleh diambil dibatasi saldo kas, dan setiap penarikan tercatat sebagai
-        pinjaman owner.
-      </Peringatan>
+      <details className="group" open>
+        <summary className="cursor-pointer list-none [&::-webkit-details-marker]:hidden">
+          <Peringatan judul="Laba bukan izin menarik uang">
+            <span className="group-open:hidden text-xs text-amber-700/70 dark:text-amber-300/70 italic block mt-1">Tap untuk membaca selengkapnya...</span>
+            <span className="hidden group-open:inline">
+              Laba kotor bisa lebih besar dari kas karena sebagian sudah berubah menjadi stok dan
+              piutang. Jangan langsung menarik uang sebesar laba tanpa melihat sisa saldo kas!
+            </span>
+          </Peringatan>
+        </summary>
+      </details>
 
       {/* Grafik omzet & laba harian */}
       <Card>
