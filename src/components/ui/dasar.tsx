@@ -93,8 +93,10 @@ export function Tombol({
 // Input
 // --------------------------------------------------------------------------
 
+// text-base di HP (16px): di bawah itu iOS Safari otomatis nge-zoom halaman
+// setiap kali input difokus, dan layout meloncat. Desktop tetap 14px.
 const KELAS_INPUT = cn(
-  "w-full rounded-lg border px-3 py-2 text-sm transition-colors",
+  "w-full rounded-lg border px-3 py-2 text-base transition-colors md:text-sm",
   "border-gray-300 bg-white text-gray-900 placeholder:text-gray-500",
   "dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-50 dark:placeholder:text-gray-400",
   "focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400",

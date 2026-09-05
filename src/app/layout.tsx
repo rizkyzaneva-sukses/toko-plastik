@@ -13,7 +13,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
+  // maximumScale sengaja tidak dikunci: memblokir zoom menyulitkan orang yang
+  // penglihatannya terbatas. Auto-zoom iOS dicegah lewat input 16px, bukan ini.
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#f8f9fb" },
     { media: "(prefers-color-scheme: dark)", color: "#0a0b0f" },

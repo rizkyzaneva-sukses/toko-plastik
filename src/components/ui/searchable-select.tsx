@@ -104,7 +104,7 @@ export function SearchableSelect(props: SingleProps | MultiProps) {
             disabled={disabled}
             aria-label={label ?? placeholder}
             className={cn(
-              "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition-colors",
+              "flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-base transition-colors md:text-sm",
               "border-gray-300 bg-white text-gray-900",
               "dark:border-zinc-700 dark:bg-zinc-800 dark:text-gray-50",
               "hover:bg-gray-50 dark:hover:bg-zinc-700",
@@ -167,7 +167,7 @@ export function SearchableSelect(props: SingleProps | MultiProps) {
                   }}
                   placeholder={searchPlaceholder}
                   className={cn(
-                    "w-full bg-transparent py-2.5 text-sm outline-none",
+                    "w-full bg-transparent py-2.5 text-base outline-none md:text-sm",
                     "text-gray-900 placeholder:text-gray-500",
                     "dark:text-gray-50 dark:placeholder:text-gray-400"
                   )}
